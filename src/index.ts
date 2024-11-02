@@ -1,5 +1,5 @@
 import { keysFromObject } from "./utils"
-
+import fs from 'fs'
 
 const familias = {
     'tita': ['Tita', 'Paco'],
@@ -54,31 +54,48 @@ for (const miembro of miembros) {
 for (const [miembro, regalado] of mapRegalados) {
     if (miembroAFamilia.get(miembro) === miembroAFamilia.get(regalado)) {
         console.error(`Error: ${miembro} le regala a ${regalado}, pero son de la misma familia!`)
+        throw new Error('Error en la tombola')
     }
 }
 // Validar que todos reciban un regalo solamente
-const regalados = [...mapRegalados.values()]
+const totalRegalos = new Map<string, number>();
+const totalRegalados = new Map<string, number>();
 for (const miembro of miembros) {
-    if (!regalados.includes(miembro)) {
-        console.error(`Error: ${miembro} no recibio regalo!`)
+    const regalado = mapRegalados.get(miembro);
+    if (!regalado) {
+        console.error(`Error: ${miembro} no dio regalo!`)
+        throw new Error('Error en la tombola')
     }
+    totalRegalos.set(miembro, (totalRegalos.get(miembro) ?? 0) + 1);
+    totalRegalados.set(regalado, (totalRegalados.get(regalado) ?? 0) + 1);
 }
-if (miembros.length !== regalados.length) {
-    console.error('Error: Algun miembro recibio mas de un regalo!')
+// Validar que todos reciban 1 y den 1
+for (const miembro of miembros) {
+    const totalRegalo = totalRegalos.get(miembro) ?? 0;
+    if (totalRegalo != 1) {
+        console.error(`${miembro} no da exactamente un regalo (${totalRegalo})`)
+        throw new Error('Error en la tombola')
+    }
+
+    const totalRegalado = totalRegalados.get(miembro) ?? 0;
+    if (totalRegalado != 1) {
+        console.error(`${miembro} no recibe exactamente un regalo (${totalRegalados})`)
+        throw new Error('Error en la tombola')
+    }
 }
 
-// Validar que todos den un regalo solamente
-const regaladores = [...mapRegalados.keys()]
-for (const miembro of miembros) {
-    if (!regaladores.includes(miembro)) {
-        console.error(`Error: ${miembro} no dio regalo!`)
-    }
-}
-if (miembros.length !== regaladores.length) {
-    console.error('Error: Algun miembro dio mas de un regalo!')
-}
+console.log('Tombola ejecutada con exito! 🎅')
 
 console.log('Asignacion de regalos:')
 for (const [miembro, regalado] of mapRegalados) {
     console.log(`${miembro} le regala a ${regalado}`)
 }
+
+// Generate CSV with results
+const csvData = []
+for (const [miembro, regalado] of mapRegalados) {
+    csvData.push({ miembro, regalado, mensaje: `Feliz Navidad ${miembro}! Para el intercambio prepara un regalo para ${regalado}`})
+}
+const csvString = `de,para,mensaje\n` + csvData.map(row => `${row.miembro},${row.regalado}, ${row.mensaje}`).join('\n')
+fs.writeFileSync('tombola.csv', csvString)
+console.log('Archivo CSV generado con exito! 🎅')

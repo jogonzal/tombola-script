@@ -5,6 +5,7 @@
   "repository": "https://github.com/jogonzal/tombola-script.git",
   "author": "Jorge <jogonzal@users.noreply.github.com>",
   "devDependencies": {
+    "@types/node": "^22.8.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   },
